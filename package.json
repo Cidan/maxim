@@ -1,0 +1,19 @@
+{
+  "name": "maxim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "hubot": "^2.18.0",
+    "hubot-discord": "^1.1.0",
+    "hubot-scripts": "^2.16.2",
+    "numeral": "^1.5.3",
+    "request": "^2.72.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
