@@ -16,6 +16,22 @@ String.prototype.capitalize = () ->
 pnum = (n) ->
 	return numeral(n).format('0,0')
 
+# Initial work here
+init = (cb) ->
+	clean = [
+		'solarsystems_id_to_name',
+		'solarsystems_name_to_id',
+		'kills_by_id'
+	]
+	ops = []
+
+	ops.push (icb) ->
+		async.each clean, (item, ecb) ->
+			client.del item, ecb
+		, icb
+	
+	async.series ops, cb
+	
 # Refresh our solor systems and keep a local, in memory cache lookup
 # table indexed by both id, and name.
 refreshSolarSystems = (cb) ->
@@ -59,6 +75,7 @@ lookupSystemKills = (msg) ->
 		client.hget 'solarsystems_name_to_id', name, cb
 	
 	ops.push (id, cb) ->
+		return msg.send("Either #{name.capitalize()} has had no kills in the last hour, or that system doesn't exist.") if not id
 		client.hget 'kills_by_id', id, cb
 	
 	ops.push (data, cb) ->
@@ -69,8 +86,9 @@ lookupSystemKills = (msg) ->
 	async.waterfall ops
 
 module.exports = (robot) ->
-	async.forever refreshSolarSystems
-	async.forever refreshKills
+	init () ->
+		async.forever refreshSolarSystems
+		async.forever refreshKills
 	robot.respond /online count/i, playersOnline
 	robot.respond /who's online\?/i, playersOnline
 	robot.respond /how safe is (.*)\?/i, lookupSystemKills
