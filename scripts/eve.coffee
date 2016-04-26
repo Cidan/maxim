@@ -7,6 +7,7 @@ xml2js = require 'xml2js'
 client = redis.createClient()
 crest = "https://public-crest.eveonline.com"
 xmlapi = "https://api.eveonline.com"
+evescout = "https://eve-scout.com/api"
 
 ## Local functions
 String.prototype.capitalize = () ->
@@ -29,9 +30,9 @@ init = (cb) ->
 		async.each clean, (item, ecb) ->
 			client.del item, ecb
 		, icb
-	
+
 	async.series ops, cb
-	
+
 # Refresh our solor systems and keep a local, in memory cache lookup
 # table indexed by both id, and name.
 refreshSolarSystems = (cb) ->
@@ -58,6 +59,7 @@ refreshKills = (cb) ->
 				console.log "Solar system kill data refreshed."
 				setTimeout cb, 3900000
 
+
 ## Chat commands
 
 # Get a count of current people online in eve.
@@ -70,20 +72,40 @@ playersOnline = (msg) ->
 lookupSystemKills = (msg) ->
 	name = msg.match[1].toLowerCase()
 	ops = []
-	
+
 	ops.push (cb) ->
 		client.hget 'solarsystems_name_to_id', name, cb
-	
+
 	ops.push (id, cb) ->
 		return msg.send("Either #{name.capitalize()} has had no kills in the last hour, or that system doesn't exist.") if not id
 		client.hget 'kills_by_id', id, cb
-	
+
 	ops.push (data, cb) ->
 		data = JSON.parse(data)
 		msg.send "#{name.capitalize()} has had #{pnum(data.shipKills)} ship kills, #{pnum(data.factionKills)} faction kills, and #{pnum(data.podKills)} pod kills in the last hour."
 		cb()
-	
+
 	async.waterfall ops
+
+lookupTheraDistance = (msg) ->
+	system = msg.match[1].toLowerCase()
+
+	queryResponse = request.get "#{evescout}/wormholes?systemSearch=#{system}", (err, resp) ->
+		return console.log(err) if err
+		data = JSON.parse(resp.body)
+
+		# I daren't make this recursive, it does not sound like a good idea. But I want to.
+		jumps = 0
+		try
+			for reqSystem in data
+				if jumps == 0 or system.jumps < jumps
+					jumps = reqSystem.jumps
+					targetSystem = reqSystem.destinationSolarSystem.name
+
+			msg.send("The closest Thera connection to #{system.capitalize()} is **#{jumps}** jumps away in **#{targetSystem}**")
+
+		catch error
+			msg.send("Invalid system.")
 
 module.exports = (robot) ->
 	init () ->
@@ -91,6 +113,11 @@ module.exports = (robot) ->
 		async.forever refreshKills
 	robot.respond /online count/i, playersOnline
 	robot.respond /who's online\?/i, playersOnline
+
 	robot.respond /how safe is (.*)\?/i, lookupSystemKills
 	robot.respond /info on (.*)/i, lookupSystemKills
 	robot.respond /is (.*) safe\?/i, lookupSystemKills
+
+	robot.respond /how far from (.*) to thera\?/i, lookupTheraDistance
+	robot.respond /distance to thera from (.*)\?/i, lookupTheraDistance
+	robot.respond /distance from (.*) to thera\?/i, lookupTheraDistance
