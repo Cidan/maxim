@@ -90,7 +90,7 @@ lookupSystemKills = (msg) ->
 lookupTheraDistance = (msg) ->
 	system = msg.match[1].toLowerCase()
 
-	queryResponse = request.get "#{evescout}/wormholes?systemSearch=#{system}", (err, resp) ->
+	request.get "#{evescout}/wormholes?systemSearch=#{system}", (err, resp) ->
 		return console.log(err) if err
 		data = JSON.parse(resp.body)
 
