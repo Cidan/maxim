@@ -94,18 +94,15 @@ lookupTheraDistance = (msg) ->
 		return console.log(err) if err
 		data = JSON.parse(resp.body)
 
-		# I daren't make this recursive, it does not sound like a good idea. But I want to.
 		jumps = 0
-		try
-			for reqSystem in data
-				if jumps == 0 or system.jumps < jumps
-					jumps = reqSystem.jumps
-					targetSystem = reqSystem.destinationSolarSystem.name
+		targetSystem = undefined
 
-			msg.send("The closest Thera connection to #{system.capitalize()} is **#{jumps}** jumps away in **#{targetSystem}**")
+		for reqSystem in data when system.jumps < jumps or jumps == 0
+			jumps = reqSystem.jumps
+			targetSystem = reqSystem.destinationSolarSystem.name
 
-		catch error
-			msg.send("Invalid system.")
+		msg.send("The closest Thera connection I found to #{system.capitalize()} is **#{jumps}** jumps away in **#{targetSystem}**")
+
 
 module.exports = (robot) ->
 	init () ->
