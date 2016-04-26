@@ -97,7 +97,7 @@ lookupTheraDistance = (msg) ->
 		jumps = 0
 		targetSystem = undefined
 
-		for reqSystem in data when system.jumps < jumps or jumps == 0
+		for reqSystem in data when reqSystem.jumps < jumps or jumps == 0
 			jumps = reqSystem.jumps
 			targetSystem = reqSystem.destinationSolarSystem.name
 
