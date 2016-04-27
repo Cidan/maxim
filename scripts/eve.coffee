@@ -94,12 +94,15 @@ lookupTheraDistance = (msg) ->
 		return console.log(err) if err
 		data = JSON.parse(resp.body)
 
-		jumps = 0
 		targetSystem = undefined
+		jumps = undefined
+		for s in data
+			if s.jumps == 0 and s.destinationSolarSystem.name.toLowerCase() == system
+				return msg.send "I think there's a hole to Thera in #{system.capitalize()} itself."
 
-		for reqSystem in data when reqSystem.jumps < jumps or jumps == 0
-			jumps = reqSystem.jumps
-			targetSystem = reqSystem.destinationSolarSystem.name
+			if (s.jumps < jumps or jumps == undefined) and s.jumps != 0
+				jumps = s.jumps
+				targetSystem = s.destinationSolarSystem.name
 
 		msg.send("The closest Thera connection I found to #{system.capitalize()} is **#{jumps}** jumps away in **#{targetSystem}**")
 
