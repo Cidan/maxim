@@ -38,19 +38,21 @@ init = (cb) ->
 refreshSolarSystems = (cb) ->
 	request.get "#{crest}/solarsystems/", (err, resp) ->
 		return setTimeout(cb, 60000) if err
+		return setTimeout(cb, 60000) if resp.statusCode != 200
 		data = JSON.parse(resp.body)
 		async.each data.items, (item, icb) ->
 			client.hset 'solarsystems_id_to_name', item.id, item.name.toLowerCase(), () ->
 				client.hset 'solarsystems_name_to_id', item.name.toLowerCase(), item.id, icb
 		, () ->
 			console.log "Solar system data refreshed."
-			setTimeout cb, 120000
+			setTimeout cb, 3900000
 
 # Refresh system kills.
 # TODO: cache based on cache time returned by the API.
 refreshKills = (cb) ->
 	request.get "#{xmlapi}/map/kills.xml.aspx", (err, resp) ->
 		return setTimeout(cb, 60000) if err
+		return setTimeout(cb, 60000) if resp.statusCode != 200
 		xml2js.parseString resp.body, (err, data) ->
 			return setTimeout(cb, 60000) if err
 			async.each data.eveapi.result[0].rowset[0].row, (row, icb) ->
